@@ -3,5 +3,5 @@ main = "src/index.ts"
 compatibility_date = "2025-02-19"
 
 [[routes]]
-pattern = "news.ycombinator.com.krr.moe"
+pattern = "news.ycombinator.com.7f.ee"
 custom_domain = true

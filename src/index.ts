@@ -79,7 +79,13 @@ function buildDescription(item: HNItem): string {
   if (item.time) parts.push(timeAgo(item.time));
   if (item.descendants !== undefined)
     parts.push(`${item.descendants} comments`);
-  if (item.url) parts.push(`(${new URL(item.url).hostname})`);
+  if (item.url) {
+    try {
+      parts.push(`(${new URL(item.url).hostname})`);
+    } catch {
+      // Ignore malformed source URLs to avoid breaking previews.
+    }
+  }
   return parts.join(" | ");
 }
 
@@ -114,13 +120,9 @@ function buildOgHtml(
   <meta name="twitter:card" content="${ogImage ? "summary_large_image" : "summary"}" />
   <meta name="twitter:title" content="${title}" />
   <meta name="twitter:description" content="${description}" />
-
-  <!-- Redirect real browsers to HN -->
-  <meta http-equiv="refresh" content="0; url=${escapeHtml(hnUrl)}" />
 </head>
 <body>
-  <p>Redirecting to <a href="${escapeHtml(hnUrl)}">${title} on Hacker News</a>...</p>
-  <script>window.location.replace(${JSON.stringify(hnUrl)});</script>
+  <p><a href="${escapeHtml(hnUrl)}">Open "${title}" on Hacker News</a></p>
 </body>
 </html>`;
 }
@@ -155,9 +157,10 @@ export default {
     const itemId = parseInt(id, 10);
     const hnUrl = `${HN_BASE}/item?id=${itemId}`;
     const userAgent = request.headers.get("user-agent");
+    const bot = isBot(userAgent);
 
     // For regular browsers, just redirect to HN directly
-    if (!isBot(userAgent)) {
+    if (!bot) {
       return Response.redirect(hnUrl, 302);
     }
 
